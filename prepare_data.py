@@ -5,7 +5,7 @@ from typing import Dict, List, Optional
 import time
 import torch
 import nlp
-from transformers import T5Tokenizer, BartTokenizer, HfArgumentParser
+from transformers import T5Tokenizer, BartTokenizer, HfArgumentParser, AutoTokenizer
 from google_trans_new import google_translator  
 import json
 from tqdm import tqdm
@@ -53,8 +53,8 @@ class DataTrainingArguments:
         metadata={"help": "Max input length for the target text"},
     )
 
-tokenizer = T5Tokenizer.from_pretrained("t5-base")
-tokenizer.add_tokens(['<sep>', '<hl>'])
+# tokenizer = T5Tokenizer.from_pretrained("t5-base")
+# tokenizer.add_tokens(['<sep>', '<hl>'])
 
 class DataProcessor:
     def __init__(self, tokenizer, model_type="t5", max_source_length=512, max_target_length=32, translate=False):
@@ -196,13 +196,15 @@ def main():
     )
 
     if data_args.model_type == 't5':
-        tokenizer = T5Tokenizer.from_pretrained("t5-base")
+        # tokenizer = T5Tokenizer.from_pretrained("t5-base")
+        # tokenizer = AutoTokenizer.from_pretrained("roberta-large")
+        tokenizer = T5Tokenizer.from_pretrained("NlpHUST/t5-vi-en-small")
     else:
         tokenizer = BartTokenizer.from_pretrained("facebook/bart-base")
     
     tokenizer.add_tokens(['<sep>', '<hl>'])
     
-    with open ("../Nanibot_ZaloAIChallenge2019_VietnameseWikiQA/Dataset/squad_vi.json", 'r', encoding='utf-8') as f:
+    with open ("../../Nanibot_ZaloAIChallenge2019_VietnameseWikiQA/Dataset/squad_vi.json", 'r', encoding='utf-8') as f:
         squad_vi = json.load(f)
 
     data_squad = squad_vi['data'][0]['paragraphs']

@@ -156,7 +156,7 @@ def main(args_file=None):
     )
 
     model.resize_token_embeddings(len(tokenizer))
-
+    
     if model_args.freeze_embeds:
         logger.info("freezing embeddings of the model")
         freeze_embeds(model)
@@ -177,7 +177,8 @@ def main(args_file=None):
         mode="training",
         using_tpu=training_args.tpu_num_cores is not None
     )
-
+    print(dir(model))
+    print(model.get_parameter)
     # Initialize our Trainer
     trainer = Trainer(
         model=model,
@@ -185,7 +186,7 @@ def main(args_file=None):
         train_dataset=train_dataset,
         eval_dataset=valid_dataset,
         data_collator=data_collator,
-        prediction_loss_only=True,
+#         prediction_loss_only=True,
         label_smoothing=model_args.label_smoothing
     )
 
