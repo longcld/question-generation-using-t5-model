@@ -177,8 +177,8 @@ def main(args_file=None):
         mode="training",
         using_tpu=training_args.tpu_num_cores is not None
     )
-    print(dir(model))
-    print(model.get_parameter)
+    # print(dir(model))
+    # print(model.get_parameter)
     # Initialize our Trainer
     trainer = Trainer(
         model=model,

@@ -184,6 +184,42 @@ def convert_to_squad_format(data_squad):
     
     return dataset
 
+
+def convert_viquad_to_squad_format(data_squad):
+    source_texts = []
+    target_texts = []
+    task = []
+    for topic in tqdm(data_squad):
+        for paragraph in topic['paragraphs']:
+            for qas in paragraph['qas']:
+                question = qas['question']
+                answer = qas['answers'][0]['text']
+                text = "generate question: " + paragraph['context'].replace(answer, '{hl_token} ' + answer + ' {hl_token}')
+
+                source_texts.append(text)
+                target_texts.append(question)
+                task.append('qg')
+
+            sents = sent_tokenize(paragraph['context'])
+            for sent in sents:
+                target_answer = ""
+                text = "extract answers: " + paragraph['context'].replace(sent, '{hl_token} ' + sent + ' {hl_token}')
+                for qas in paragraph['qas']:
+                    answer = qas['answers'][0]['text']
+                    if answer in sent:
+                        target_answer += answer + " {sep_token} "
+                if target_answer != "":
+                    source_texts.append(text)
+                    target_texts.append(target_answer)
+                    task.append('ans_ext')
+
+    data_dict = {'source_text': source_texts,
+             'target_text': target_texts,
+             'task': task}
+    dataset = nlp.Dataset.from_dict(data_dict)
+    
+    return dataset
+
 def main():
     parser = HfArgumentParser((DataTrainingArguments,))
 
@@ -198,24 +234,35 @@ def main():
     if data_args.model_type == 't5':
         # tokenizer = T5Tokenizer.from_pretrained("t5-base")
         # tokenizer = AutoTokenizer.from_pretrained("roberta-large")
-        tokenizer = T5Tokenizer.from_pretrained("NlpHUST/t5-vi-en-small")
+        tokenizer = T5Tokenizer.from_pretrained("longcld/t5_small_qg_ae_hl")
     else:
         tokenizer = BartTokenizer.from_pretrained("facebook/bart-base")
     
     tokenizer.add_tokens(['<sep>', '<hl>'])
     
-    with open ("../../Nanibot_ZaloAIChallenge2019_VietnameseWikiQA/Dataset/squad_vi.json", 'r', encoding='utf-8') as f:
-        squad_vi = json.load(f)
+    # with open ("data/squad_vi.json", 'r', encoding='utf-8') as f:
+    #     squad_vi = json.load(f)
 
-    data_squad = squad_vi['data'][0]['paragraphs']
+    # data_squad = squad_vi['data'][0]['paragraphs']
 
-    train_squad = data_squad[:17000]
-    valid_squad = data_squad[17000:]
+    # train_squad = data_squad[:17000]
+    # valid_squad = data_squad[17000:]
     
-    train_dataset = convert_to_squad_format(train_squad)
-    valid_dataset = convert_to_squad_format(valid_squad)
+    # train_dataset = convert_to_squad_format(train_squad)
+    # valid_dataset = convert_to_squad_format(valid_squad)
+
+
     # train_dataset = nlp.load_dataset(data_args.dataset_path, name=data_args.qg_format, split=nlp.Split.TRAIN)
     # valid_dataset = nlp.load_dataset(data_args.dataset_path, name=data_args.qg_format, split=nlp.Split.VALIDATION)
+
+
+    with open ("/home/long/AQG/data/UIT-ViQuAD/ViQuADv1.1/train_ViQuAD.json", 'r') as f:
+        train_data = json.load(f)['data']
+    with open ("/home/long/AQG/data/UIT-ViQuAD/ViQuADv1.1/dev_ViQuAD.json", 'r') as f:
+        valid_data = json.load(f)['data']
+
+    train_dataset = convert_viquad_to_squad_format(train_data)
+    valid_dataset = convert_viquad_to_squad_format(valid_data)
 
     processor = DataProcessor(
         tokenizer,
